@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: aws-services-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aws_catalog_db
+    username: catalog_user
+    password: catalog_password_2026
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # Desactivado auto-ddl para delegar el esquema a Flyway
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8080
+  error:
+    include-message: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
