@@ -3,13 +3,43 @@ package com.aws.dashboard.api.domain.model;
 import java.util.List;
 
 public record ServiceDetails(
+        String shortSummary,
         String description,
+        String serviceUrl,
+        String documentationUrl,
+        String pricingUrl,
         String awsDocUrl,
         List<String> useCases,
         boolean freeTier,
         Scope scope,
+        String cliNamespace,
+        String deploymentModel,
         Pricing pricing
 ) {
+    public ServiceDetails(
+            String description,
+            String awsDocUrl,
+            List<String> useCases,
+            boolean freeTier,
+            Scope scope,
+            Pricing pricing
+    ) {
+        this(
+                null,
+                description,
+                null,
+                awsDocUrl,
+                null,
+                awsDocUrl,
+                useCases,
+                freeTier,
+                scope,
+                null,
+                null,
+                pricing
+        );
+    }
+
     public ServiceDetails {
         if (description == null || description.isBlank()) {
             throw new IllegalArgumentException("La descripcion del servicio no puede estar vacia");
@@ -20,5 +50,6 @@ public record ServiceDetails(
         if (useCases == null) useCases = List.of();
         if (scope == null) scope = Scope.UNKNOWN;
         if (pricing == null) pricing = new Pricing(PricingModel.UNKNOWN, FreeTierType.UNKNOWN, "");
+        if (documentationUrl == null) documentationUrl = awsDocUrl;
     }
 }

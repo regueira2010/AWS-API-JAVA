@@ -54,9 +54,10 @@ src/
 │  └─ resources/
 │     ├─ db/
 │     │  └─ migration/
-│     │     └─ migration/
-│     │        └─ V1__create_aws_catalog_schema.sql
-│     └─ application.yml
+│     │     └─ V1__create_aws_catalog_schema.sql
+│     ├─ application.yml
+│     ├─ aws_api_final.json
+│     └─ aws_api_sanitized.json
 └─ test/
    └─ java/
       └─ com/

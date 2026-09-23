@@ -22,10 +22,17 @@ CREATE TABLE services (
     icon_dimensions VARCHAR(20),
     
     -- Detalles
+    short_summary TEXT,
     description TEXT NOT NULL,
+    service_url TEXT,
+    documentation_url TEXT,
+    pricing_url TEXT,
     aws_doc_url TEXT NOT NULL,
     free_tier BOOLEAN NOT NULL DEFAULT false,
     scope VARCHAR(30) NOT NULL DEFAULT 'regional',
+    cli_namespace VARCHAR(50),
+    deployment_model VARCHAR(30) NOT NULL DEFAULT 'managed',
+    primary_certification_level VARCHAR(50) NOT NULL DEFAULT 'associate',
     
     -- Precios (subobjeto pricing)
     pricing_model VARCHAR(50) NOT NULL DEFAULT 'pay_as_you_go',

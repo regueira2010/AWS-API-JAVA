@@ -2,7 +2,6 @@ package com.aws.dashboard.api.application.dto;
 
 import com.aws.dashboard.api.domain.model.Service;
 
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public class ServiceDTOMapper {
@@ -31,11 +30,17 @@ public class ServiceDTOMapper {
         );
 
         var detailsDTO = new ServiceResponseDTO.DetailsDTO(
+                domain.getDetails().shortSummary(),
                 domain.getDetails().description(),
+                domain.getDetails().serviceUrl(),
+                domain.getDetails().documentationUrl(),
+                domain.getDetails().pricingUrl(),
                 domain.getDetails().awsDocUrl(),
                 domain.getDetails().useCases(),
                 domain.getDetails().freeTier(),
                 domain.getDetails().scope().getValue(),
+                domain.getDetails().cliNamespace(),
+                domain.getDetails().deploymentModel(),
                 pricingDTO
         );
 
@@ -43,7 +48,7 @@ public class ServiceDTOMapper {
                 domain.getMetadata().isActive(),
                 domain.getMetadata().status().getValue(),
                 domain.getMetadata().tags(),
-                ISO_FORMATTER.format(domain.getMetadata().updatedAt())
+                domain.getMetadata().updatedAt() != null ? ISO_FORMATTER.format(domain.getMetadata().updatedAt()) : null
         );
 
         var synergies = domain.getLearning().architecturalSynergies().stream()
@@ -58,6 +63,7 @@ public class ServiceDTOMapper {
                 synergies,
                 domain.getLearning().certifications(),
                 certDetails,
+                domain.getLearning().primaryCertificationLevel(),
                 domain.getLearning().examTips()
         );
 

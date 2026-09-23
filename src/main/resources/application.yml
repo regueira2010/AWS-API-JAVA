@@ -3,31 +3,86 @@ spring:
     name: aws-services-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/aws_catalog_db
-    username: catalog_user
-    password: catalog_password_2026
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/aws_catalog_db}
+    username: ${SPRING_DATASOURCE_USERNAME:catalog_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:catalog_password_2026}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 25
+      minimum-idle: 10
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 20000
+      pool-name: AwsCatalogHikariCP
 
   jpa:
     hibernate:
-      ddl-auto: validate # Desactivado auto-ddl para delegar el esquema a Flyway
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
+        default_batch_fetch_size: 50
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=1h
 
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+  mvc:
+    problemdetails:
+      enabled: true
+
 server:
   port: 8080
+  tomcat:
+    threads:
+      max: 100
+      min-spare: 20
+    accept-count: 200
+    connection-timeout: 10000
+  compression:
+    enabled: true
+    mime-types: application/json,text/plain,text/xml
+    min-response-size: 2048
   error:
-    include-message: always
+    include-message: never
 
 management:
   endpoints:
     web:
       exposure:
-        include: health, info, metrics
+        include: health, info, prometheus, metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+    display-request-duration: true
+
+logging:
+  level:
+    org.springframework: INFO
+    org.springframework.web: INFO
+    com.aws.dashboard: INFO

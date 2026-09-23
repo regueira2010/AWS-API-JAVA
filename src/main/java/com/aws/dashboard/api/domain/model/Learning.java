@@ -6,10 +6,20 @@ public record Learning(
         List<Synergy> architecturalSynergies,
         List<String> certifications,
         List<CertificationDetail> certificationDetails,
+        String primaryCertificationLevel,
         List<String> examTips
 ) {
     public static record Synergy(String serviceSlug, String reason) {}
     public static record CertificationDetail(String code, String name) {}
+
+    public Learning(
+            List<Synergy> architecturalSynergies,
+            List<String> certifications,
+            List<CertificationDetail> certificationDetails,
+            List<String> examTips
+    ) {
+        this(architecturalSynergies, certifications, certificationDetails, null, examTips);
+    }
 
     public Learning {
         if (architecturalSynergies == null) architecturalSynergies = List.of();
