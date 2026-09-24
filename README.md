@@ -10,6 +10,7 @@
 Inspirada en el modelo de catálogos interactivos exhaustivos, este backend provee una fuente canónica, normalizada y enriquecida con información técnica sobre **280 servicios oficiales de AWS** organizados en **22 categorías oficiales**.
 
 A diferencia de catálogos estáticos, esta API ofrece:
+
 - **Metadatos Técnicos Precisos:** Espacio de nombres de AWS CLI (`cli_namespace`), modelos de despliegue (`managed`, `serverless`, `iaas`), alcances operativos (`regional`, `global`) y enlaces directos a consolas, documentación y precios.
 - **Pedagogía y Certificaciones:** Mapeo formal hacia las **13 certificaciones oficiales vigentes de AWS** (desde *Cloud Practitioner* y *AI Practitioner* hasta *Solutions Architect*, *Data Engineer* y especialidades), con sinergias arquitectónicas (AWS Well-Architected) y consejos clave de examen.
 - **Rendimiento de Nivel Empresarial:** Tiempos de respuesta en submilisegundos mediante caché L1 en memoria (**Caffeine**), soporte nativo de **HTTP ETag** (`304 Not Modified`), compresión **Gzip** y mitigación total de consultas SQL N+1 vía **Hibernate Batch Fetching**.
@@ -104,6 +105,7 @@ com.aws.dashboard.api/
 ## 🚀 Guía de Instalación y Despliegue
 
 ### Requisitos Previos
+
 - **JDK 21** o superior instalado y configurado en el `PATH` (`java -version`).
 - **Docker** y **Docker Compose** en ejecución (`docker --version`).
 - **Git** para clonar el repositorio.
@@ -111,6 +113,7 @@ com.aws.dashboard.api/
 ---
 
 ### 1. Clonar el Repositorio
+
 ```bash
 git clone https://github.com/regueira2010/AWS-API-JAVA.git
 cd AWS-API-JAVA
@@ -119,6 +122,7 @@ cd AWS-API-JAVA
 ---
 
 ### 2. Iniciar la Base de Datos PostgreSQL
+
 Inicia el contenedor de PostgreSQL con las credenciales y volúmenes preconfigurados:
 
 ```bash
@@ -126,6 +130,7 @@ docker compose up -d
 ```
 
 Verifica que el contenedor esté saludable:
+
 ```bash
 docker compose ps
 ```
@@ -133,19 +138,23 @@ docker compose ps
 ---
 
 ### 3. Ingesta Automática y Arranque de la Aplicación
+
 El proyecto incluye un mecanismo idempotente (`DataDataLoader`) que, al arrancar por primera vez y detectar la base de datos vacía, ingesta automáticamente los 280 servicios y 22 categorías desde `aws_api_sanitized.json`.
 
 En Windows (PowerShell):
+
 ```powershell
 .\mvnw spring-boot:run
 ```
 
 En Linux / macOS:
+
 ```bash
 ./mvnw spring-boot:run
 ```
 
 El servidor estará listo en el puerto `8080`:
+
 ```text
 Tomcat started on port 8080 (http) with context path '/'
 Started AwsServicesApiApplication in 13.5 seconds
@@ -181,24 +190,75 @@ Para explorar interactivamente la API, probar endpoints y ver el esquema de dato
 
 ## 📡 Endpoints Principales y Ejemplos de Consumo
 
-### 1. Catálogo Paginado de Servicios
+### 1. Catálogo de Servicios y Estrategias de Paginación
+
+El endpoint `/api/v1/services` ofrece soporte flexible para dos modalidades de consumo según la arquitectura del cliente:
+
+#### Modalidad A: Carga Completa del Catálogo (Recomendada para SPA / Filtros Instantáneos en Cliente)
+
+Si no se envían parámetros, o se solicita un límite amplio (ej. `?limit=300`), el backend devuelve los **280 servicios** en una única respuesta ultrarrápida (~35 KB con Gzip):
+
+```http
+GET /api/v1/services HTTP/1.1
+Host: localhost:8080
+```
+
+- **Ventaja:** El cliente descarga el catálogo completo una sola vez, lo almacena en el estado global (React State, Zustand, Vuex, Pinia) y ejecuta búsquedas por texto, categorías o certificaciones **en 0 ms en memoria**, sin disparar peticiones de red ni arriesgarse a exceder el Rate Limiter (120 req/min).
+- **Respuesta de Paginación:** `pages = 1`, `has_more = false`, `total = 280`, `limit = 280`.
+
+#### Modalidad B: Paginación Clásica Server-Side (Para Vistas en Bloques)
+
+Si se desea paginar en el servidor dividiendo los resultados en bloques (ej. 20 servicios por vista):
+
 ```http
 GET /api/v1/services?page=1&limit=20 HTTP/1.1
 Host: localhost:8080
-Accept: application/json
 ```
 
-**Ejemplo de Petición con cURL:**
-```bash
-curl -i "http://localhost:8080/api/v1/services?page=1&limit=5"
+| Parámetro Query | Tipo | Requerido | Valor por Defecto | Descripción |
+| :--- | :---: | :---: | :---: | :--- |
+| `page` | `Integer` | No | `1` | Número de página (1-based index). Si se ingresa un valor <= 0, se normaliza automáticamente a 1. |
+| `limit` | `Integer` | No | `totalServices` (280) | Cantidad de servicios por página. Si no se indica, devuelve el catálogo completo en la página 1. |
+
+#### Estructura del Objeto `pagination` en la Respuesta
+
+```json
+{
+  "pagination": {
+    "total": 280,
+    "page": 1,
+    "limit": 20,
+    "pages": 14,
+    "has_more": true,
+    "next_cursor": null,
+    "next": "/api/v1/services?page=2&limit=20",
+    "prev": null
+  }
+}
 ```
 
-**Ejemplo de Petición Condicional con ETag (HTTP 304):**
+- `total`: Total absoluto de servicios registrados en la base de datos (280).
+- `page`: Número de página actual devuelta.
+- `limit`: Límite de elementos solicitado o asignado.
+- `pages`: Total de páginas calculadas dinámicamente (`ceil(total / limit)`).
+- `has_more`: Booleano `true` si existen más páginas después de la actual.
+- `next`: URL lista para consultar la siguiente página (o `null` si es la última).
+- `prev`: URL lista para consultar la página anterior (o `null` si es la primera).
+
+**Ejemplo de Petición con cURL (Paginada):**
+
 ```bash
-curl -i -H 'If-None-Match: "0edd8c05bc4ca7ef925ac2bf27e342252"' "http://localhost:8080/api/v1/services?page=1&limit=5"
+curl -i "http://localhost:8080/api/v1/services?page=2&limit=10"
+```
+
+**Ejemplo de Petición Condicional con ETag (HTTP 304 - Ahorro de Ancho de Banda):**
+
+```bash
+curl -i -H 'If-None-Match: "0edd8c05bc4ca7ef925ac2bf27e342252"' "http://localhost:8080/api/v1/services?page=1&limit=20"
 ```
 
 ### 2. Ficha Técnica de un Servicio por Slug
+
 ```http
 GET /api/v1/services/amazon-simple-storage-service HTTP/1.1
 Host: localhost:8080
@@ -206,11 +266,13 @@ Accept: application/json
 ```
 
 **Ejemplo con cURL:**
+
 ```bash
 curl -i "http://localhost:8080/api/v1/services/amazon-simple-storage-service"
 ```
 
 ### 3. Códigos de Estado HTTP y Errores Estandarizados (RFC 7807)
+
 | Código | Estado | Escenario |
 | :---: | :--- | :--- |
 | `200` | OK | Petición exitosa, devuelve DTO o Envelope. |

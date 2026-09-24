@@ -1,0 +1,12 @@
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+.vscode/
+scratch/
+*.log
+docker-compose.yml
+directory.md
+walkthrough.md
+implementation_plan.md

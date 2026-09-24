@@ -1,34 +1,62 @@
-HELP.md
+# ========================================================
+# Git Ignore - AWS Cloud Services API (Java 21 / Spring)
+# ========================================================
+
+# 1. Compilación y Artefactos
 target/
+*.jar
+*.war
+*.ear
+*.class
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
-.apt_generated
+# 2. Secretos, Credenciales y Entorno
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pkcs12
+*.pfx
+*.p12
+*.jks
+
+# 3. Entornos de Desarrollo (IDEs)
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
 .classpath
-.factorypath
 .project
-.settings
+.settings/
+.factorypath
 .springBeans
 .sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-*.docx
-
-### NetBeans ###
+.apt_generated/
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# 4. Archivos Temporales y Logs
+*.log
+logs/
+hs_err_pid*
+replay_pid*
+
+# 5. Archivos del Sistema Operativo
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# 6. Basura Interna, Scripts Scratch y Documentos Temporales
+scratch/
+directory.md
+HELP.md
+*.docx

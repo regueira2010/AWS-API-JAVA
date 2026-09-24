@@ -1,5 +1,7 @@
 package com.aws.dashboard.api.infrastructure.config;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
@@ -12,14 +14,16 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Order(1)
 public class RateLimitFilter implements Filter {
 
-    private final Map<String, Bucket> ipBuckets = new ConcurrentHashMap<>();
+    // Caché acotada con desalojo LRU y TTL de 10 min para prevenir ataques de agotamiento de memoria (OOM) en 512MB RAM
+    private final Cache<String, Bucket> ipBuckets = Caffeine.newBuilder()
+            .maximumSize(5_000)
+            .expireAfterAccess(Duration.ofMinutes(10))
+            .build();
 
     private Bucket createBucketForIp() {
         // Límite: 120 peticiones por minuto por cliente IP
@@ -44,9 +48,9 @@ public class RateLimitFilter implements Filter {
         }
 
         String clientIp = resolveClientIp(req);
-        Bucket bucket = ipBuckets.computeIfAbsent(clientIp, k -> createBucketForIp());
+        Bucket bucket = ipBuckets.get(clientIp, k -> createBucketForIp());
 
-        if (bucket.tryConsume(1)) {
+        if (bucket != null && bucket.tryConsume(1)) {
             chain.doFilter(request, response);
         } else {
             res.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());

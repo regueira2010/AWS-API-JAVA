@@ -31,16 +31,19 @@ public class ServiceRestController {
 
     @GetMapping
     @Operation(
-            summary = "Obtener catálogo paginado de servicios de AWS",
+            summary = "Obtener catálogo de servicios de AWS (Paginado o Completo)",
             description = """
-                    Retorna un sobre (envelope) canónico que incluye:
-                    - **info**: Metadatos globales de versión, fecha de actualización y proveedores.
-                    - **pagination**: Conteo total (280 servicios), páginas totales, enlaces `next` y `prev`.
-                    - **results**: Lista de servicios con detalles, precios, modelos de despliegue y certificaciones.
+                    Retorna un sobre (*envelope*) canónico con dos modalidades de consumo:
+                    
+                    1. **Carga Completa (Recomendada para SPA / Filtros en Cliente):**  
+                       Si se omiten `page` y `limit`, el backend retorna los **280 servicios** en una sola respuesta (~35 KB con Gzip) permitiendo al frontend realizar filtros en memoria a 0 ms.
+                    
+                    2. **Paginación Server-Side:**  
+                       Si se especifican `page` y `limit`, los resultados se fragmentan en bloques, calculando automáticamente el conteo total de páginas (`pages`), indicador de continuidad (`has_more`), y enlaces relativos de navegación (`next`, `prev`).
                     
                     **Cabeceras de Soporte:**
                     - Emite cabecera `ETag` para validación condicional (`If-None-Match`).
-                    - Habilita compresión Gzip para payloads grandes.
+                    - Compresión Gzip activada (`Content-Encoding: gzip`).
                     """
     )
     @ApiResponses(value = {
@@ -66,9 +69,9 @@ public class ServiceRestController {
             )
     })
     public ResponseEntity<CatalogEnvelopeDTO> getCatalog(
-            @Parameter(description = "Número de página (1-indexed). Por defecto 1.", example = "1")
+            @Parameter(description = "Número de página (1-based index). Si se omite, por defecto es 1.", example = "1")
             @RequestParam(required = false) Integer page,
-            @Parameter(description = "Cantidad de elementos por página. Por defecto todos los elementos.", example = "20")
+            @Parameter(description = "Cantidad de servicios por página. Si se omite, devuelve el catálogo completo (280 servicios).", example = "20")
             @RequestParam(required = false) Integer limit) {
         CatalogEnvelopeDTO envelope = getCatalogEnvelopeUseCase.execute(page, limit);
         return ResponseEntity.ok(envelope);
