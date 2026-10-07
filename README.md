@@ -2,6 +2,11 @@
 
 API REST construida con Java 21 y Spring Boot 3 que expone un catálogo normalizado de 280 servicios de AWS, 22 categorías y su mapeo hacia las 13 certificaciones oficiales vigentes.
 
+> **API en Producción:** `https://aws-services-api.onrender.com`  
+> **Swagger UI (En vivo):** [https://aws-services-api.onrender.com/swagger-ui/index.html](https://aws-services-api.onrender.com/swagger-ui/index.html)  
+> **Health Check:** [https://aws-services-api.onrender.com/actuator/health](https://aws-services-api.onrender.com/actuator/health)
+
+
 ## Características
 
 - **Catálogo normalizado:** 280 servicios con metadatos técnicos (`cli_namespace`, `deployment_model`, `scope`) y enlaces a documentación, consola y precios.
@@ -130,8 +135,10 @@ La API estará disponible en `http://localhost:8080`.
 
 ## Documentación OpenAPI / Swagger
 
-- **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **Especificación OpenAPI (JSON):** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+- **Swagger UI (Producción):** [https://aws-services-api.onrender.com/swagger-ui/index.html](https://aws-services-api.onrender.com/swagger-ui/index.html)
+- **Swagger UI (Local):** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- **Especificación OpenAPI (JSON):** [https://aws-services-api.onrender.com/v3/api-docs](https://aws-services-api.onrender.com/v3/api-docs)
+
 
 ## Endpoints
 
